@@ -1,0 +1,196 @@
+name: Deploy AKS Cluster with Terraform
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/deploy-aks.yml'
+      - 'config.json'
+  workflow_dispatch:
+
+env:
+  TERRAFORM_VERSION: "1.5.0"
+  KUBERNETES_VERSION: "1.34"
+  AZURE_REGION: "northeurope"
+  ENVIRONMENT_NAME: "dev"
+  AZURE_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
+  AZURE_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  AZURE_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+    environment: non-production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load Configuration
+        id: config
+        run: |
+          ENV_NAME="${{ env.ENVIRONMENT_NAME }}"
+          CONFIG=$(cat config.json | jq -r ".${ENV_NAME}")
+          echo "environment=$(echo $CONFIG | jq -r '.environment')" >> $GITHUB_OUTPUT
+          echo "environment_type=$(echo $CONFIG | jq -r '.environment_type')" >> $GITHUB_OUTPUT
+          echo "resource_group=$(echo $CONFIG | jq -r '.resource_group')" >> $GITHUB_OUTPUT
+          echo "cluster_name=$(echo $CONFIG | jq -r '.cluster_name')" >> $GITHUB_OUTPUT
+          echo "node_count=$(echo $CONFIG | jq -r '.node_count')" >> $GITHUB_OUTPUT
+          echo "vm_size=$(echo $CONFIG | jq -r '.vm_size')" >> $GITHUB_OUTPUT
+          echo "min_count=$(echo $CONFIG | jq -r '.min_count')" >> $GITHUB_OUTPUT
+          echo "max_count=$(echo $CONFIG | jq -r '.max_count')" >> $GITHUB_OUTPUT
+          echo "cost_center=$(echo $CONFIG | jq -r '.cost_center')" >> $GITHUB_OUTPUT
+          echo "owner=$(echo $CONFIG | jq -r '.owner')" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Azure Login (Federated Credentials)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+        working-directory: terraform
+        continue-on-error: true
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+        env:
+          ARM_USE_AZUREAD: true
+          ARM_USE_MSAL: true
+
+      - name: Terraform Validate
+        run: terraform validate
+        working-directory: terraform
+
+      - name: Terraform Plan
+        run: |
+          terraform plan \
+            -var="environment=${{ steps.config.outputs.environment }}" \
+            -var="resource_group_name=${{ steps.config.outputs.resource_group }}" \
+            -var="cluster_name=${{ steps.config.outputs.cluster_name }}" \
+            -var="kubernetes_version=${{ env.KUBERNETES_VERSION }}" \
+            -var="node_count=${{ steps.config.outputs.node_count }}" \
+            -var="vm_size=${{ steps.config.outputs.vm_size }}" \
+            -var="enable_auto_scaling=true" \
+            -var="min_count=${{ steps.config.outputs.min_count }}" \
+            -var="max_count=${{ steps.config.outputs.max_count }}" \
+            -var="location=${{ env.AZURE_REGION }}" \
+            -var="network_plugin=azure" \
+            -var="network_plugin_mode=overlay" \
+            -var="load_balancer_sku=standard" \
+            -var="enable_monitoring=true" \
+            -var="enable_managed_identity=true" \
+            -var="tags={env=\"dev\",type=\"non-production\",cost_center=\"development\",owner=\"devops-team\",managed_by=\"terraform\"}" \
+            -out=tfplan
+        working-directory: terraform
+        env:
+          ARM_USE_AZUREAD: true
+          ARM_USE_MSAL: true
+
+      - name: Upload Plan Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: tfplan-${{ steps.config.outputs.environment }}
+          path: terraform/tfplan
+          retention-days: 1
+
+  terraform-apply:
+    needs: terraform-plan
+    runs-on: ubuntu-latest
+    environment: non-production
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Load Configuration
+        id: config
+        run: |
+          ENV_NAME="${{ env.ENVIRONMENT_NAME }}"
+          CONFIG=$(cat config.json | jq -r ".${ENV_NAME}")
+          echo "environment=$(echo $CONFIG | jq -r '.environment')" >> $GITHUB_OUTPUT
+          echo "environment_type=$(echo $CONFIG | jq -r '.environment_type')" >> $GITHUB_OUTPUT
+          echo "resource_group=$(echo $CONFIG | jq -r '.resource_group')" >> $GITHUB_OUTPUT
+          echo "cluster_name=$(echo $CONFIG | jq -r '.cluster_name')" >> $GITHUB_OUTPUT
+          echo "node_count=$(echo $CONFIG | jq -r '.node_count')" >> $GITHUB_OUTPUT
+          echo "vm_size=$(echo $CONFIG | jq -r '.vm_size')" >> $GITHUB_OUTPUT
+          echo "min_count=$(echo $CONFIG | jq -r '.min_count')" >> $GITHUB_OUTPUT
+          echo "max_count=$(echo $CONFIG | jq -r '.max_count')" >> $GITHUB_OUTPUT
+          echo "cost_center=$(echo $CONFIG | jq -r '.cost_center')" >> $GITHUB_OUTPUT
+          echo "owner=$(echo $CONFIG | jq -r '.owner')" >> $GITHUB_OUTPUT
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Azure Login (Federated Credentials)
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Download Plan Artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: tfplan-${{ steps.config.outputs.environment }}
+          path: terraform
+
+      - name: Terraform Init
+        run: terraform init
+        working-directory: terraform
+        env:
+          ARM_USE_AZUREAD: true
+          ARM_USE_MSAL: true
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+        working-directory: terraform
+        env:
+          ARM_USE_AZUREAD: true
+          ARM_USE_MSAL: true
+
+      - name: Get Terraform Outputs
+        id: tf-outputs
+        run: |
+          echo "cluster_name=$(terraform output -raw kubernetes_cluster_name)" >> $GITHUB_OUTPUT
+          echo "resource_group=$(terraform output -raw resource_group_name)" >> $GITHUB_OUTPUT
+          echo "fqdn=$(terraform output -raw kubernetes_cluster_fqdn)" >> $GITHUB_OUTPUT
+        working-directory: terraform
+
+      - name: Get AKS Credentials
+        run: |
+          az aks get-credentials \
+            --resource-group "${{ steps.tf-outputs.outputs.resource_group }}" \
+            --name "${{ steps.tf-outputs.outputs.cluster_name }}" \
+            --overwrite-existing
+
+      - name: Verify Cluster
+        run: |
+          kubectl cluster-info
+          kubectl get nodes
+        continue-on-error: true
+
+      - name: Display Deployment Summary
+        run: |
+          echo "=== AKS Cluster Deployed Successfully ==="
+          echo "Environment: ${{ steps.config.outputs.environment }}"
+          echo "Cluster Name: ${{ steps.tf-outputs.outputs.cluster_name }}"
+          echo "Resource Group: ${{ steps.tf-outputs.outputs.resource_group }}"
+          echo "FQDN: ${{ steps.tf-outputs.outputs.fqdn }}"
+
