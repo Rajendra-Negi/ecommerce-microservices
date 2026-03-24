@@ -11,7 +11,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
   dns_prefix          = var.cluster_name
   kubernetes_version  = var.kubernetes_version
 
-  default_node_pool {
+  default_node_pool 
+  {
     name                = "agentpool"
     node_count          = var.enable_auto_scaling ? null : var.node_count
     vm_size             = var.vm_size
@@ -38,28 +39,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     network_plugin_mode = var.network_plugin_mode
     load_balancer_sku   = var.load_balancer_sku
     outbound_type       = "loadBalancer"
-  }
-
-  dynamic "microsoft_defender" {
-    for_each = var.environment == "prod" ? [1] : []
-    content {
-      enabled = true
-    }
-  }
-
-  api_server_access_profile {
-    authorized_ip_ranges = length(var.api_server_authorized_ip_ranges) > 0 ? var.api_server_authorized_ip_ranges : null
-  }
-
-  addon_profile {
-    oms_agent {
-      enabled                    = var.enable_monitoring
-      log_analytics_workspace_id = var.log_analytics_workspace_id
-    }
-
-    azure_policy {
-      enabled = var.environment == "prod"
-    }
   }
 
   tags = var.tags
