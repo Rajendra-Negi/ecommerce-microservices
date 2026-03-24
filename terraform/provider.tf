@@ -20,9 +20,8 @@ terraform {
 provider "azurerm" {
   features {
     virtual_machine {
-      delete_os_disk_on_delete            = true
-      graceful_shutdown                   = false
-      skip_shutdown_and_force_delete       = false
+      graceful_shutdown            = true
+      skip_shutdown_and_force_delete = false
     }
   }
   
