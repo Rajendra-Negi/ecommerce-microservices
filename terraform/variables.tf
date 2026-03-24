@@ -97,13 +97,13 @@ variable "load_balancer_sku" {
 variable "enable_monitoring" {
   description = "Enable Container Insights monitoring"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "log_analytics_workspace_id" {
   description = "Log Analytics Workspace ID for monitoring"
   type        = string
-  default     = null
+  default     = 1
 }
 
 variable "tags" {
