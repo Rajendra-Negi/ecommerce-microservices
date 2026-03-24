@@ -4,7 +4,7 @@
     "environment_type": "non-production",
     "resource_group": "rg-aks-dev",
     "cluster_name": "aks-dev-cluster",
-    "node_count": 1,
+    "node_count": 2,
     "vm_size": "Standard_B1s",
     "min_count": 1,
     "max_count": 2,
