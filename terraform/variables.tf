@@ -41,7 +41,7 @@ variable "node_count" {
 variable "vm_size" {
   description = "VM size for the nodes"
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_DS2_v2"
 }
 
 variable "os_disk_size_gb" {
