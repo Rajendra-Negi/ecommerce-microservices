@@ -23,7 +23,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
     max_count           = var.enable_auto_scaling ? var.max_count : null
 
     type  = "VirtualMachineScaleSets"
-    zones = [1, 2, 3]
 
     tags = var.tags
   }
