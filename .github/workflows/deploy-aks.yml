@@ -48,12 +48,12 @@ jobs:
           echo "owner=$(echo $CONFIG | jq -r '.owner')" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Azure Login (Federated Credentials)
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -134,12 +134,12 @@ jobs:
           echo "owner=$(echo $CONFIG | jq -r '.owner')" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Azure Login (Federated Credentials)
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
