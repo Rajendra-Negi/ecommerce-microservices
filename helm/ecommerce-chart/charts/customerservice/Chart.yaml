@@ -1,0 +1,4 @@
+apiVersion: v2
+name: customerservice
+version: 0.1.0
+appVersion: "v1"

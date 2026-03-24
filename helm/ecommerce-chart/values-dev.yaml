@@ -1,0 +1,26 @@
+global:
+  namespace: dev
+
+product-service:
+  replicaCount: 1
+  image:
+    repository: rajendranegi/productservice
+    tag: v1
+  service:
+    port: 8080
+
+customer-service:
+  replicaCount: 1
+  image:
+    repository: rajendranegi/customerservice
+    tag: v1
+  service:
+    port: 8080
+
+order-service:
+  replicaCount: 1
+  image:
+    repository: rajendranegi/orderservice
+    tag: v1
+  service:
+    port: 8080

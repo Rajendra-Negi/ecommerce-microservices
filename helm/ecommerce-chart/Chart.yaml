@@ -1,0 +1,15 @@
+apiVersion: v2
+name: ecommerce-chart
+version: 0.1.0
+description: Umbrella chart for Product, Customer, and Order services
+
+dependencies:
+  - name: productservice
+    version: 0.1.0
+    repository: "file://charts/productservice"
+  - name: customerservice
+    version: 0.1.0
+    repository: "file://charts/customerservice"
+  - name: orderservice
+    version: 0.1.0
+    repository: "file://charts/orderservice"
