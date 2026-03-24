@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -20,10 +20,10 @@ terraform {
 provider "azurerm" {
   features {
     virtual_machine {
-      graceful_shutdown            = true
+      graceful_shutdown              = true
       skip_shutdown_and_force_delete = false
     }
   }
-  
+
   skip_provider_registration = false
 }

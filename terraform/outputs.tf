@@ -29,11 +29,6 @@ output "kube_config" {
   sensitive   = true
 }
 
-output "kube_config_context" {
-  description = "Kubernetes context"
-  value       = azurerm_kubernetes_cluster.aks.kube_config[0].cluster_name
-}
-
 output "client_certificate" {
   description = "Client certificate"
   value       = azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate
