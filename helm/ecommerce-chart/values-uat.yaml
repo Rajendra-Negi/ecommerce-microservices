@@ -2,7 +2,7 @@ global:
   namespace: uat
 
 product-service:
-  replicaCount: 2
+  replicaCount: 0
   image:
     repository: rajendranegi/productservice
     tag: v1
@@ -10,7 +10,7 @@ product-service:
     port: 8080
 
 customer-service:
-  replicaCount: 2
+  replicaCount: 0
   image:
     repository: rajendranegi/customerservice
     tag: v1
@@ -18,7 +18,7 @@ customer-service:
     port: 8080
 
 order-service:
-  replicaCount: 2
+  replicaCount: 0
   image:
     repository: rajendranegi/orderservice
     tag: v1
