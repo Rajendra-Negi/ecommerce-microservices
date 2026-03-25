@@ -5,10 +5,10 @@ ingress:
   paths:
     - path: /products
       service: productservice
-      port: 80
+      port: 8080
     - path: /customers
       service: customerservice
-      port: 80
+      port: 8080
     - path: /orders
       service: orderservice
-      port: 80
+      port: 8080
