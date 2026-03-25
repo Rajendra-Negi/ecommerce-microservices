@@ -1,7 +1,7 @@
 global:
   namespace: prod
 
-product-service:
+productservice:
   replicaCount: 4
   image:
     repository: rajendranegi/productservice
@@ -9,7 +9,7 @@ product-service:
   service:
     port: 8080
 
-customer-service:
+customerservice:
   replicaCount: 4
   image:
     repository: rajendranegi/customerservice
@@ -17,7 +17,7 @@ customer-service:
   service:
     port: 8080
 
-order-service:
+orderservice:
   replicaCount: 4
   image:
     repository: rajendranegi/orderservice
