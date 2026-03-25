@@ -1,8 +1,7 @@
-{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ecommerce-ingress
+  name: "{{ .Release.Name }}-ingress"
   namespace: {{ .Release.Namespace }}
 spec:
   ingressClassName: nginx
@@ -10,25 +9,12 @@ spec:
     - host: {{ .Values.ingress.host }}
       http:
         paths:
-          - path: /products
+        {{- range .Values.ingress.paths }}
+          - path: {{ .path }}
             pathType: Prefix
             backend:
               service:
-                name: productservice
+                name: {{ .service }}
                 port:
-                  number: 8080
-          - path: /customers
-            pathType: Prefix
-            backend:
-              service:
-                name: customerservice
-                port:
-                  number: 8080
-          - path: /orders
-            pathType: Prefix
-            backend:
-              service:
-                name: orderservice
-                port:
-                  number: 8080
-{{- end }}
+                  number: {{ .port }}
+        {{- end }}

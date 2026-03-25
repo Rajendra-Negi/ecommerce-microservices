@@ -1,5 +1,14 @@
 global:
   namespace: default
 ingress:
-  enabled: true
-  host: ecommerce.local   # fake hostname, map in /etc/hosts
+  host: dev.ecommerce.local
+  paths:
+    - path: /products
+      service: productservice
+      port: 80
+    - path: /customers
+      service: customerservice
+      port: 80
+    - path: /orders
+      service: orderservice
+      port: 80
