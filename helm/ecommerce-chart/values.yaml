@@ -1,2 +1,5 @@
 global:
   namespace: default
+ingress:
+  enabled: true
+  host: ecommerce.local   # fake hostname, map in /etc/hosts
