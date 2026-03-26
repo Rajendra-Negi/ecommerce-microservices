@@ -22,6 +22,6 @@ orderservice:
   replicaCount: 1
   image:
     repository: rajendranegi/orderservice
-    tag: v2
+    tag: v3
   service:
     port: 8080
