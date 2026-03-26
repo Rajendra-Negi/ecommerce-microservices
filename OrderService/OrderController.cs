@@ -16,15 +16,15 @@ public class OrderController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PlaceOrder([FromBody] Order order)
     {
-        // Call Product Service
-        var productResponse = await _httpClient.GetAsync($"http://product-service:8080/products/{order.ProductId}");
+        // Call Product Service (correct URL)
+        var productResponse = await _httpClient.GetAsync($"http://dev.ecommerce.local/products/{order.ProductId}");
         if (!productResponse.IsSuccessStatusCode)
             return BadRequest("Product not found");
         var productJson = await productResponse.Content.ReadAsStringAsync();
         var product = JsonSerializer.Deserialize<Product>(productJson);
 
-        // Call Customer Service
-        var customerResponse = await _httpClient.GetAsync($"http://customer-service:8080/customers/{order.CustomerId}");
+        // Call Customer Service (correct URL)
+        var customerResponse = await _httpClient.GetAsync($"http://dev.ecommerce.local/customers/{order.CustomerId}");
         if (!customerResponse.IsSuccessStatusCode)
             return BadRequest("Customer not found");
         var customerJson = await customerResponse.Content.ReadAsStringAsync();
@@ -49,6 +49,7 @@ public class OrderController : ControllerBase
     public IActionResult GetAllOrders() => Ok(Orders);
 }
 
+// Records
 public record Order(string OrderId, string ProductId, string CustomerId, int Quantity);
 public record Product(string Id, string Name, decimal Price);
 public record Customer(string Id, string Name, string Status);
