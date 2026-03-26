@@ -23,17 +23,21 @@ public class OrderController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> PlaceOrder([FromBody] Order order)
     {
-        // Call Product Service
-        var productResponse = await _httpClient.GetAsync($"http://dev.ecommerce.local/products/{order.ProductId}");
+        // Call Product Service via internal DNS
+        var productResponse = await _httpClient.GetAsync(
+            $"http://productservice.dev.svc.cluster.local:8080/products/{order.ProductId}");
         if (!productResponse.IsSuccessStatusCode)
             return BadRequest("Product not found");
+
         var productJson = await productResponse.Content.ReadAsStringAsync();
         var product = JsonSerializer.Deserialize<Product>(productJson, _jsonOptions);
 
-        // Call Customer Service
-        var customerResponse = await _httpClient.GetAsync($"http://dev.ecommerce.local/customers/{order.CustomerId}");
+        // Call Customer Service via internal DNS
+        var customerResponse = await _httpClient.GetAsync(
+            $"http://customerservice.dev.svc.cluster.local:8080/customers/{order.CustomerId}");
         if (!customerResponse.IsSuccessStatusCode)
             return BadRequest("Customer not found");
+
         var customerJson = await customerResponse.Content.ReadAsStringAsync();
         var customer = JsonSerializer.Deserialize<Customer>(customerJson, _jsonOptions);
 
