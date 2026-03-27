@@ -31,13 +31,21 @@ jobs:
             --name aks-dev-cluster \
             --overwrite-existing
 
-      # Fetch AKS ingress IP dynamically (works for dev or uat clusters)
-      - name: Get AKS Ingress IP
-        id: ingress-ip
+      # Fetch Dev ingress IP
+      - name: Get Dev Ingress IP
+        id: dev-ingress
         run: |
-          IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx \
+          DEV_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx \
             -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-          echo "INGRESS_IP=$IP" >> $GITHUB_ENV
+          echo "DEV_IP=$DEV_IP" >> $GITHUB_ENV
+
+      # Fetch UAT ingress IP
+      - name: Get UAT Ingress IP
+        id: uat-ingress
+        run: |
+          UAT_IP=$(kubectl get svc ingress-uat-ingress-nginx-controller -n ingress-uat \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "UAT_IP=$UAT_IP" >> $GITHUB_ENV
 
       - name: Create Traffic Manager Profile
         run: |
@@ -59,7 +67,7 @@ jobs:
             --profile-name ecommerce-global \
             --name dev-endpoint \
             --type externalEndpoints \
-            --target $INGRESS_IP \
+            --target $DEV_IP \
             --priority 1
 
       - name: Add UAT Endpoint
@@ -69,7 +77,7 @@ jobs:
             --profile-name ecommerce-global \
             --name uat-endpoint \
             --type externalEndpoints \
-            --target $INGRESS_IP \
+            --target $UAT_IP \
             --priority 2
 
       - name: Create Private DNS Zone
