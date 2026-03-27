@@ -3,7 +3,6 @@ global:
 ingress:
   hosts:
     - dev.ecommerce.local
-    - ecommerce-global.trafficmanager.net
   paths:
     - path: /products
       service: productservice

@@ -3,7 +3,6 @@ global:
 ingress:
   hosts:
     - shop.dev.ecommerce-demo1.com
-    - ecommerce-global.trafficmanager.net
 productservice:
   replicaCount: 1
   image:
