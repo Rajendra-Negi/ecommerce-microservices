@@ -1,0 +1,49 @@
+name: Deploy Traffic Manager
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  traffic-manager:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # Required for OIDC
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure Login (Federated Credentials)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Traffic Manager Profile and Endpoints
+        uses: azure/cli@v2
+        with:
+          inlineScript: |
+            # Create Traffic Manager profile
+            az network traffic-manager profile create \
+              --name ecommerce-global \
+              --resource-group ecommerce-rg \
+              --routing-method Priority \
+              --unique-dns-name ecommerce-global \
+              --ttl 30 \
+              --protocol HTTP \
+              --port 80 \
+              --path /customers
+
+            # Add Dev endpoint (raw IP)
+            az network traffic-manager endpoint create \
+              --resource-group ecommerce-rg \
+              --profile-name ecommerce-global \
+              --name dev-endpoint \
+              --type externalEndpoints \
+              --target 52.142.127.89 \
+              --priority 1
+
