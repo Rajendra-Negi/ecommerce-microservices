@@ -47,6 +47,15 @@ jobs:
             -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
           echo "UAT_IP=$UAT_IP" >> $GITHUB_ENV
 
+      # Validate health endpoints before Traffic Manager registration
+      - name: Validate Dev Health Probe
+        run: |
+          curl -f http://$DEV_IP/healthz || exit 1
+
+      - name: Validate UAT Health Probe
+        run: |
+          curl -f http://$UAT_IP/healthz || exit 1
+
       - name: Create Traffic Manager Profile
         run: |
           az network traffic-manager profile create \
@@ -92,21 +101,21 @@ jobs:
           az network private-dns record-set cname set-record \
             --resource-group ecommerce-rg \
             --zone-name ecommerce-demo1.com \
-            --name dev \
+            --record-set-name dev \
             --cname ecommerce-global.trafficmanager.net
 
           # shop.ecommerce-demo1.com → Traffic Manager
           az network private-dns record-set cname set-record \
             --resource-group ecommerce-rg \
             --zone-name ecommerce-demo1.com \
-            --name shop \
+            --record-set-name shop \
             --cname ecommerce-global.trafficmanager.net
 
           # uat.ecommerce-demo1.com → Traffic Manager
           az network private-dns record-set cname set-record \
             --resource-group ecommerce-rg \
             --zone-name ecommerce-demo1.com \
-            --name uat \
+            --record-set-name uat \
             --cname ecommerce-global.trafficmanager.net
 
       - name: Link Private DNS Zone to VNet
