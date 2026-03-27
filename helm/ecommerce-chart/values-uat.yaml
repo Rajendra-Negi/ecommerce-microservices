@@ -1,7 +1,7 @@
 global:
   namespace: uat
 ingress:
-  host: uat.ecommerce.local
+  host: shop.ecommerce-demo1.com
 productservice:
   replicaCount: 1
   image:
@@ -22,6 +22,6 @@ orderservice:
   replicaCount: 1
   image:
     repository: rajendranegi/orderservice
-    tag: v1
+    tag: v3
   service:
     port: 8080
