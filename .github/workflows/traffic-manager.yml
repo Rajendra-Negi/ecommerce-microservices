@@ -97,25 +97,18 @@ jobs:
 
       - name: Add CNAME Records
         run: |
-          # dev.ecommerce-demo1.com → Traffic Manager
+          # shop.dev.ecommerce-demo1.com → Traffic Manager
           az network private-dns record-set cname set-record \
             --resource-group ecommerce-rg \
             --zone-name ecommerce-demo1.com \
-            --record-set-name dev \
+            --record-set-name shop.dev \
             --cname ecommerce-global.trafficmanager.net
 
-          # shop.ecommerce-demo1.com → Traffic Manager
+          # shop.uat.ecommerce-demo1.com → Traffic Manager
           az network private-dns record-set cname set-record \
             --resource-group ecommerce-rg \
             --zone-name ecommerce-demo1.com \
-            --record-set-name shop \
-            --cname ecommerce-global.trafficmanager.net
-
-          # uat.ecommerce-demo1.com → Traffic Manager
-          az network private-dns record-set cname set-record \
-            --resource-group ecommerce-rg \
-            --zone-name ecommerce-demo1.com \
-            --record-set-name uat \
+            --record-set-name shop.uat \
             --cname ecommerce-global.trafficmanager.net
 
       - name: Link Private DNS Zone to VNet
