@@ -1,7 +1,7 @@
 global:
   namespace: uat
 ingress:
-  host: shop.ecommerce-demo1.com
+  host: shop.uat.ecommerce-demo1.com
 productservice:
   replicaCount: 1
   image:
