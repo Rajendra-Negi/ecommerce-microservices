@@ -1,7 +1,9 @@
 global:
   namespace: default
 ingress:
-  host: dev.ecommerce.local
+  hosts:
+    - dev.ecommerce.local
+    - ecommerce-global.trafficmanager.net
   paths:
     - path: /products
       service: productservice
