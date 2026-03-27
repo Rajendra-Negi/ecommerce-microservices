@@ -24,6 +24,13 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Set AKS Context (aks-dev-cluster)
+        run: |
+          az aks get-credentials \
+            --resource-group rg-aks-dev \
+            --name aks-dev-cluster \
+            --overwrite-existing
+
       # Fetch AKS ingress IP dynamically (works for dev or uat clusters)
       - name: Get AKS Ingress IP
         id: ingress-ip
