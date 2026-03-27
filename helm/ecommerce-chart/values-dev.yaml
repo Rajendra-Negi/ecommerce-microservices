@@ -1,7 +1,9 @@
 global:
   namespace: dev
 ingress:
-  host: dev.ecommerce-demo1.com
+  host:
+    - dev.ecommerce-demo1.com
+    - shop.ecommerce-demo1.com
 productservice:
   replicaCount: 1
   image:
