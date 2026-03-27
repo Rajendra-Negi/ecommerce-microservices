@@ -117,5 +117,6 @@ jobs:
             --resource-group ecommerce-rg \
             --zone-name ecommerce-demo1.com \
             --name ecommerce-vnet-link \
-            --virtual-network /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/ecommerce-rg/providers/Microsoft.Network/virtualNetworks/ecommerce-vnet \
+            --virtual-network /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MC_rg-aks-dev_aks-dev-cluster_northeurope/providers/Microsoft.Network/virtualNetworks/aks-vnet-29158593 \
             --registration-enabled false
+
