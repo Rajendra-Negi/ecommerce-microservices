@@ -12,3 +12,6 @@ ingress:
     - path: /orders
       service: orderservice
       port: 8080
+    - path: /healthz
+      service: productservice   # or a dedicated health aggregator service
+      port: 8080
