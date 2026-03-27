@@ -1,7 +1,7 @@
 global:
   namespace: dev
 ingress:
-  host:
+  hosts:
     - dev.ecommerce-demo1.com
     - shop.ecommerce-demo1.com
 productservice:
