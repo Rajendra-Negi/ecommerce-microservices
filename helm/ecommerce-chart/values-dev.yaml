@@ -1,7 +1,9 @@
 global:
   namespace: dev
 ingress:
-  host: shop.dev.ecommerce-demo1.com
+  hosts:
+    - shop.dev.ecommerce-demo1.com
+    - ecommerce-global.trafficmanager.net
 productservice:
   replicaCount: 1
   image:
