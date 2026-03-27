@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: non-production
     permissions:
-      id-token: write   # Required for OIDC
+      id-token: write
       contents: read
 
     steps:
@@ -24,27 +24,81 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Create Traffic Manager Profile and Endpoints
-        uses: azure/cli@v2
-        with:
-          inlineScript: |
-            # Create Traffic Manager profile
-            az network traffic-manager profile create \
-              --name ecommerce-global \
-              --resource-group ecommerce-rg \
-              --routing-method Priority \
-              --unique-dns-name ecommerce-global \
-              --ttl 30 \
-              --protocol HTTP \
-              --port 80 \
-              --path /customers
+      # Fetch AKS ingress IP dynamically (works for dev or uat clusters)
+      - name: Get AKS Ingress IP
+        id: ingress-ip
+        run: |
+          IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "INGRESS_IP=$IP" >> $GITHUB_ENV
 
-            # Add Dev endpoint (raw IP)
-            az network traffic-manager endpoint create \
-              --resource-group ecommerce-rg \
-              --profile-name ecommerce-global \
-              --name dev-endpoint \
-              --type externalEndpoints \
-              --target 52.142.127.89 \
-              --priority 1
+      - name: Create Traffic Manager Profile
+        run: |
+          az network traffic-manager profile create \
+            --name ecommerce-global \
+            --resource-group ecommerce-rg \
+            --routing-method Priority \
+            --unique-dns-name ecommerce-global \
+            --ttl 30 \
+            --protocol HTTP \
+            --port 80 \
+            --path /healthz
 
+      # Add endpoints for both dev and uat
+      - name: Add Dev Endpoint
+        run: |
+          az network traffic-manager endpoint create \
+            --resource-group ecommerce-rg \
+            --profile-name ecommerce-global \
+            --name dev-endpoint \
+            --type externalEndpoints \
+            --target $INGRESS_IP \
+            --priority 1
+
+      - name: Add UAT Endpoint
+        run: |
+          az network traffic-manager endpoint create \
+            --resource-group ecommerce-rg \
+            --profile-name ecommerce-global \
+            --name uat-endpoint \
+            --type externalEndpoints \
+            --target $INGRESS_IP \
+            --priority 2
+
+      - name: Create Private DNS Zone
+        run: |
+          az network private-dns zone create \
+            --resource-group ecommerce-rg \
+            --name ecommerce-demo1.com
+
+      - name: Add CNAME Records
+        run: |
+          # dev.ecommerce-demo1.com → Traffic Manager
+          az network private-dns record-set cname set-record \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --name dev \
+            --cname ecommerce-global.trafficmanager.net
+
+          # shop.ecommerce-demo1.com → Traffic Manager
+          az network private-dns record-set cname set-record \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --name shop \
+            --cname ecommerce-global.trafficmanager.net
+
+          # uat.ecommerce-demo1.com → Traffic Manager
+          az network private-dns record-set cname set-record \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --name uat \
+            --cname ecommerce-global.trafficmanager.net
+
+      - name: Link Private DNS Zone to VNet
+        run: |
+          az network private-dns link vnet create \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --name ecommerce-vnet-link \
+            --virtual-network /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/ecommerce-rg/providers/Microsoft.Network/virtualNetworks/ecommerce-vnet \
+            --registration-enabled false
