@@ -8,6 +8,7 @@ on:
 jobs:
   traffic-manager:
     runs-on: ubuntu-latest
+    environment: non-production
     permissions:
       id-token: write   # Required for OIDC
       contents: read
