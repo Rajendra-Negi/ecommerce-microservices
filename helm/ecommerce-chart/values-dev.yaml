@@ -30,7 +30,7 @@ orderservice:
 productwebapp:                # <-- new section
   replicaCount: 1
   image:
-    repository: productwebapp
+    repository: rajendranegi/productwebapp
     tag: v2
   service:
     port: 8080
