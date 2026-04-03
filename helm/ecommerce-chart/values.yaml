@@ -5,17 +5,17 @@ ingress:
     - shop.dev.ecommerce-demo1.com
   paths:
     - path: /
-      service: ecommerce-dev-productwebapp
+      service: ecommerce-dev-productwebapp   # Service name confirmed earlier
       port: 8080
     - path: /products
-      service: ecommerce-dev-productservice
+      service: productservice                # Correct name from kubectl describe
       port: 8080
     - path: /customers
-      service: ecommerce-dev-customerservice
+      service: customerservice
       port: 8080
     - path: /orders
-      service: ecommerce-dev-orderservice
+      service: orderservice
       port: 8080
     - path: /healthz
-      service: ecommerce-dev-productservice
+      service: productservice
       port: 8080
