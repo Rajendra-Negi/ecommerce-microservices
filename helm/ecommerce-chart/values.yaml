@@ -2,20 +2,20 @@ global:
   namespace: default
 ingress:
   hosts:
-    - dev.ecommerce.local
+    - shop.dev.ecommerce-demo1.com
   paths:
     - path: /
-      service: productwebapp
+      service: ecommerce-dev-productwebapp
       port: 8080
     - path: /products
-      service: productservice
+      service: ecommerce-dev-productservice
       port: 8080
     - path: /customers
-      service: customerservice
+      service: ecommerce-dev-customerservice
       port: 8080
     - path: /orders
-      service: orderservice
+      service: ecommerce-dev-orderservice
       port: 8080
     - path: /healthz
-      service: productservice
+      service: ecommerce-dev-productservice
       port: 8080
