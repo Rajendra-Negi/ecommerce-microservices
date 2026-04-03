@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: rajendranegi/productservice
-  tag: v2
+  tag: v4
   pullPolicy: IfNotPresent
 
 service:
