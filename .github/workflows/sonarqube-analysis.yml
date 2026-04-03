@@ -1,0 +1,91 @@
+name: SonarQube Analysis (.NET Services)
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  push:
+    branches: [ "main" ]
+
+jobs:
+  sonar-customer:
+    runs-on: windows-latest
+    environment: non-production
+    steps:
+      - name: Check SonarQube connectivity
+        run: curl -H "Host: sonarqube.dev.ecommerce.local" $SONAR_HOST_URL/api/system/status
+
+      - uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Install SonarScanner for MSBuild
+        run: dotnet tool install --global dotnet-sonarscanner
+
+      - name: SonarQube Begin Analysis (CustomerService)
+        shell: cmd
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN_CUSTOMER: ${{ secrets.SONAR_TOKEN_CUSTOMER }}
+        run: dotnet sonarscanner begin /k:"CustomerService" /d:sonar.host.url=%SONAR_HOST_URL% /d:sonar.login=%SONAR_TOKEN_CUSTOMER%
+
+      - name: Build CustomerService
+        run: dotnet build CustomerService/CustomerService.csproj --no-incremental
+
+      - name: SonarQube End Analysis (CustomerService)
+        shell: cmd
+        env:
+          SONAR_TOKEN_CUSTOMER: ${{ secrets.SONAR_TOKEN_CUSTOMER }}
+        run: dotnet sonarscanner end /d:sonar.login=%SONAR_TOKEN_CUSTOMER%
+
+  sonar-order:
+    runs-on: windows-latest
+    environment: non-production
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install SonarScanner for MSBuild
+        run: dotnet tool install --global dotnet-sonarscanner
+      - name: SonarQube Begin Analysis (OrderService)
+        shell: cmd
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN_ORDER: ${{ secrets.SONAR_TOKEN_ORDER }}
+        run: dotnet sonarscanner begin /k:"OrderService" /d:sonar.host.url=%SONAR_HOST_URL% /d:sonar.login=%SONAR_TOKEN_ORDER%
+      - name: Build OrderService
+        run: dotnet build OrderService/OrderService.csproj --no-incremental
+      - name: SonarQube End Analysis (OrderService)
+        shell: cmd
+        env:
+          SONAR_TOKEN_ORDER: ${{ secrets.SONAR_TOKEN_ORDER }}
+        run: dotnet sonarscanner end /d:sonar.login=%SONAR_TOKEN_ORDER%
+
+  sonar-product:
+    runs-on: windows-latest
+    environment: non-production
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - name: Install SonarScanner for MSBuild
+        run: dotnet tool install --global dotnet-sonarscanner
+      - name: SonarQube Begin Analysis (ProductService)
+        shell: cmd
+        env:
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN_PRODUCT: ${{ secrets.SONAR_TOKEN_PRODUCT }}
+        run: dotnet sonarscanner begin /k:"ProductService" /d:sonar.host.url=%SONAR_HOST_URL% /d:sonar.login=%SONAR_TOKEN_PRODUCT%
+      - name: Build ProductService
+        run: dotnet build ProductService/ProductService.csproj --no-incremental
+      - name: SonarQube End Analysis (ProductService)
+        shell: cmd
+        env:
+          SONAR_TOKEN_PRODUCT: ${{ secrets.SONAR_TOKEN_PRODUCT }}
+        run: dotnet sonarscanner end /d:sonar.login=%SONAR_TOKEN_PRODUCT%

@@ -1,0 +1,30 @@
+monitoringPasscode: "myStrongPasscode123"
+
+# Edition selection
+community:
+  enabled: true   # ✅ This tells Helm to deploy Community Edition
+
+# Optional extras
+persistence:
+  enabled: true
+  size: 10Gi
+
+service:
+  type: ClusterIP
+  port: 9000
+
+resources:
+  requests:
+    memory: "2Gi"
+    cpu: "500m"
+  limits:
+    memory: "4Gi"
+    cpu: "1"
+
+# # Ingress configuration (extend your global ingress)
+# ingress:
+#   enabled: true
+#   hosts:
+#     - name: dev.ecommerce.local
+#       path: /sonarqube
+#       tls: false

@@ -1,0 +1,15 @@
+replicaCount: 1
+
+image:
+  repository: productwebapp
+  tag: v2
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+env:
+  PRODUCT_API_URL: "http://productservice:8080/products"
+
+resources: {}

@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "productwebapp.fullname" . }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "productwebapp.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "productwebapp.name" . }}
+    spec:
+      containers:
+        - name: productwebapp
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: PRODUCT_API_URL
+              value: {{ .Values.env.PRODUCT_API_URL | quote }}

@@ -1,0 +1,74 @@
+name: Azure SQL Terraform Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Choose: dev | uat | prod"
+        required: true
+        default: "dev"
+      model:
+        description: "Choose: dtu | vcore | serverless | elasticpool"
+        required: true
+        default: "vcore"
+      auto_apply:
+        description: "Set true to auto-apply"
+        required: false
+        default: "false"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    environment: non-production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.6.6
+
+      - name: Azure Login (Federated Credentials)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Terraform Format
+        run: terraform -chdir=terraformDB fmt -check -recursive
+
+      - name: Terraform Init
+        run: terraform -chdir=terraformDB init -backend-config="backend-${{ github.event.inputs.environment }}.conf"
+        env:
+          ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
+
+      - name: Terraform Validate
+        run: terraform -chdir=terraformDB validate
+
+      - name: Terraform Plan
+        shell: bash
+        run: |
+          terraform -chdir=terraformDB plan \
+              -var="environment=${{ github.event.inputs.environment }}" \
+              -var="model=${{ github.event.inputs.model }}" \
+              -var-file="environments/${{ github.event.inputs.environment }}.tfvars"
+        env:
+          ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
+
+      - name: Terraform Apply
+        if: ${{ github.event.inputs.auto_apply == 'true' }}
+        shell: bash
+        run: |
+          terraform -chdir=terraformDB apply -auto-approve \
+              -var="environment=${{ github.event.inputs.environment }}" \
+              -var="model=${{ github.event.inputs.model }}" \
+              -var-file="environments/${{ github.event.inputs.environment }}.tfvars"
+        env:
+          ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}

@@ -1,0 +1,10 @@
+environment      = "dev"
+model            = "serverless"
+server_name      = "dev-sqlserver"
+resource_group   = "uat-rg"
+location         = "northeurope"
+admin_login      = "sqladmin"
+admin_password   = "MyP@ssword123"
+db_name          = "dev-db"
+capacity         = 2
+auto_pause_delay = 60

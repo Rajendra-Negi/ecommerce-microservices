@@ -6,7 +6,7 @@ public class CustomerController : ControllerBase
 {
     private static readonly List<Customer> Customers = new()
     {
-        new Customer("C101", "Rajesh Kumar", "Active"),
+        new Customer("C101", "Rajesh Kumar", "Active11"),
         new Customer("C102", "Anita Sharma", "Inactive"),
         new Customer("C103", "Vikram Singh", "Active"),
         new Customer("C104", "Priya Nair", "Active"),

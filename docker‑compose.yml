@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  productservice:
+    image: rajendranegi/productservice:v1   # must match your local image name
+    container_name: productservice
+    ports:
+      - "5001:8080"
+
+  productwebapp:
+    image: productwebapp:v2                 # must match your local image name
+    container_name: productwebapp
+    ports:
+      - "5006:8080"
+    environment:
+      PRODUCT_API_URL: "http://productservice:8080/products"
+    depends_on:
+      - productservice

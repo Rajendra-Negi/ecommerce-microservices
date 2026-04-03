@@ -1,0 +1,13 @@
+variable "model" {}
+variable "server_name" {}
+variable "resource_group_name" {}
+variable "location" {}
+variable "admin_login" {}
+variable "admin_password" {}
+variable "db_name" {}
+variable "service_objective" {}
+variable "capacity" {}
+variable "auto_pause_delay" {}
+variable "min_capacity" {}
+variable "max_capacity" {}
+variable "pool_name" {}

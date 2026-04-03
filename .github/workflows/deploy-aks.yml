@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  TERRAFORM_VERSION: "1.5.0"
+  TERRAFORM_VERSION: "1.9.5"
   KUBERNETES_VERSION: "1.34"
   AZURE_REGION: "northeurope"
   ENVIRONMENT_NAME: "dev"
@@ -27,6 +27,8 @@ jobs:
   terraform-plan:
     runs-on: ubuntu-latest
     environment: non-production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # Opt in early to Node.js 24
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,12 +50,12 @@ jobs:
           echo "owner=$(echo $CONFIG | jq -r '.owner')" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Azure Login (Federated Credentials)
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
@@ -101,7 +103,7 @@ jobs:
           ARM_USE_MSAL: true
 
       - name: Upload Plan Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ steps.config.outputs.environment }}
           path: terraform/tfplan
@@ -111,6 +113,8 @@ jobs:
     needs: terraform-plan
     runs-on: ubuntu-latest
     environment: non-production
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # Opt in early to Node.js 24
     if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
 
     steps:
@@ -134,19 +138,19 @@ jobs:
           echo "owner=$(echo $CONFIG | jq -r '.owner')" >> $GITHUB_OUTPUT
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
       - name: Azure Login (Federated Credentials)
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Download Plan Artifact
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: tfplan-${{ steps.config.outputs.environment }}
           path: terraform

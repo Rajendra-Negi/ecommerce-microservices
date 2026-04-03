@@ -1,0 +1,24 @@
+global:
+  namespace: default
+ingress:
+  hosts:
+    - dev.ecommerce.local
+  paths:
+    - path: /products
+      service: productservice
+      port: 8080
+    - path: /customers
+      service: customerservice
+      port: 8080
+    - path: /orders
+      service: orderservice
+      port: 8080
+    - path: /healthz
+      service: productservice   # or a dedicated health aggregator service
+      port: 8080
+    - path: /webapp
+      service: productwebapp
+      port: 8080
+    # - path: /sonarqube          # 
+    #   service: sonarqube-sonarqube        # Service name created by Helm install
+    #   port: 9000                # SonarQube default port

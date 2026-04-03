@@ -1,0 +1,39 @@
+global:
+  namespace: dev
+ingress:
+  hosts:
+    - shop.dev.ecommerce-demo1.com
+productservice:
+  replicaCount: 1
+  image:
+    repository: rajendranegi/productservice
+    tag: v2
+  service:
+    port: 8080
+
+customerservice:
+  replicaCount: 1
+  image:
+    repository: rajendranegi/customerservice
+    tag: v2
+  service:
+    port: 8080
+
+orderservice:
+  replicaCount: 1
+  image:
+    repository: rajendranegi/orderservice
+    tag: v4
+  service:
+    port: 8080
+
+productwebapp:                # <-- new section
+  replicaCount: 1
+  image:
+    repository: productwebapp
+    tag: v2
+  service:
+    port: 8080
+  env:
+    PRODUCT_API_URL: "http://productservice:8080/products"
+  

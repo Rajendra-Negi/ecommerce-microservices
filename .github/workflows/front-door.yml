@@ -1,0 +1,138 @@
+name: Deploy Azure Front Door with Private Link
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  frontdoor:
+    runs-on: ubuntu-latest
+    environment: non-production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Install Front Door extension
+      - name: Install Front Door Extension
+        run: |
+          az config set extension.dynamic_install_allow_preview=true
+          az extension add --name front-door || echo "Front Door extension already installed."
+
+      # Discover subnet ID
+      - name: Discover Subnet ID
+        run: |
+          SUBNET_ID=$(az network vnet subnet show \
+            --resource-group MC_rg-aks-dev_aks-dev-cluster_northeurope \
+            --vnet-name aks-vnet-29158593 \
+            --name aks-subnet \
+            --query id -o tsv | tr -d '\r\n')
+          echo "SUBNET_ID=$SUBNET_ID" >> $GITHUB_ENV
+
+      # Create Private Link Services in AKS-managed RG
+      - name: Create Private Link Services
+        run: |
+          az network private-link-service create \
+            --name pls-dev \
+            --resource-group MC_rg-aks-dev_aks-dev-cluster_northeurope \
+            --location northeurope \
+            --subnet "$SUBNET_ID" \
+            --lb-name kubernetes \
+            --lb-frontend-ip-configs aaa22bae92d034421935028593bb81e6
+
+          az network private-link-service create \
+            --name pls-uat \
+            --resource-group MC_rg-aks-dev_aks-dev-cluster_northeurope \
+            --location northeurope \
+            --subnet "$SUBNET_ID" \
+            --lb-name kubernetes \
+            --lb-frontend-ip-configs af05f7cd99caa45249fbf1b72bb7b880
+
+      # Lookup PLS IDs
+      - name: Get Private Link Service IDs
+        run: |
+          PLS_DEV_ID=$(az network private-link-service show \
+            --name pls-dev \
+            --resource-group MC_rg-aks-dev_aks-dev-cluster_northeurope \
+            --query id -o tsv)
+          echo "PLS_DEV_ID=$PLS_DEV_ID" >> $GITHUB_ENV
+
+          PLS_UAT_ID=$(az network private-link-service show \
+            --name pls-uat \
+            --resource-group MC_rg-aks-dev_aks-dev-cluster_northeurope \
+            --query id -o tsv)
+          echo "PLS_UAT_ID=$PLS_UAT_ID" >> $GITHUB_ENV
+
+      # Create Front Door Premium shell
+      - name: Create Front Door Premium
+        run: |
+          az network front-door create \
+            --resource-group ecommerce-rg \
+            --name ecommerce-frontdoor \
+            --sku Premium_AzureFrontDoor
+
+      # Add frontend endpoint
+      - name: Add Frontend Endpoint
+        run: |
+          az network front-door frontend-endpoint create \
+            --resource-group ecommerce-rg \
+            --front-door-name ecommerce-frontdoor \
+            --name ecommerce-frontend \
+            --host-name ecommerce-frontdoor.azurefd.net
+
+      # Create backend pool with Dev PLS
+      - name: Create Backend Pool
+        run: |
+          az network front-door backend-pool create \
+            --resource-group ecommerce-rg \
+            --front-door-name ecommerce-frontdoor \
+            --name ecommerce-backendpool \
+            --backends $PLS_DEV_ID \
+            --backend-host-header dev.ecommerce.local \
+            --http-port 80 \
+            --https-port 443
+
+      # Add UAT backend via Private Link
+      - name: Add UAT Backend
+        run: |
+          az network front-door backend-pool backend add \
+            --resource-group ecommerce-rg \
+            --front-door-name ecommerce-frontdoor \
+            --backend-pool-name ecommerce-backendpool \
+            --address $PLS_UAT_ID \
+            --backend-host-header uat.ecommerce.local \
+            --http-port 80 --https-port 443
+
+      # Create routing rule
+      - name: Create Routing Rule
+        run: |
+          az network front-door routing-rule create \
+            --resource-group ecommerce-rg \
+            --front-door-name ecommerce-frontdoor \
+            --name ecommerce-routingrule \
+            --frontend-endpoints ecommerce-frontend \
+            --backend-pool ecommerce-backendpool \
+            --patterns-to-match "/*" \
+            --forwarding-protocol MatchRequest
+
+      # Configure health probe
+      - name: Configure Health Probe
+        run: |
+          az network front-door probe create \
+            --resource-group ecommerce-rg \
+            --front-door-name ecommerce-frontdoor \
+            --name ecommerce-healthprobe \
+            --path /healthz \
+            --protocol Http \
+            --interval 30

@@ -1,0 +1,122 @@
+name: Deploy Traffic Manager
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  traffic-manager:
+    runs-on: ubuntu-latest
+    environment: non-production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure Login (Federated Credentials)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set AKS Context (aks-dev-cluster)
+        run: |
+          az aks get-credentials \
+            --resource-group rg-aks-dev \
+            --name aks-dev-cluster \
+            --overwrite-existing
+
+      # Fetch Dev ingress IP
+      - name: Get Dev Ingress IP
+        id: dev-ingress
+        run: |
+          DEV_IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "DEV_IP=$DEV_IP" >> $GITHUB_ENV
+
+      # Fetch UAT ingress IP
+      - name: Get UAT Ingress IP
+        id: uat-ingress
+        run: |
+          UAT_IP=$(kubectl get svc ingress-uat-ingress-nginx-controller -n ingress-uat \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          echo "UAT_IP=$UAT_IP" >> $GITHUB_ENV
+
+      # Validate health endpoints before Traffic Manager registration
+      - name: Validate Dev Health Probe
+        run: |
+          curl -f http://$DEV_IP/healthz || exit 1
+
+      - name: Validate UAT Health Probe
+        run: |
+          curl -f http://$UAT_IP/healthz || exit 1
+
+      - name: Create Traffic Manager Profile
+        run: |
+          az network traffic-manager profile create \
+            --name ecommerce-global \
+            --resource-group ecommerce-rg \
+            --routing-method Priority \
+            --unique-dns-name ecommerce-global \
+            --ttl 30 \
+            --protocol HTTP \
+            --port 80 \
+            --path /healthz
+
+      # Add endpoints for both dev and uat
+      - name: Add Dev Endpoint
+        run: |
+          az network traffic-manager endpoint create \
+            --resource-group ecommerce-rg \
+            --profile-name ecommerce-global \
+            --name dev-endpoint \
+            --type externalEndpoints \
+            --target $DEV_IP \
+            --priority 1
+
+      - name: Add UAT Endpoint
+        run: |
+          az network traffic-manager endpoint create \
+            --resource-group ecommerce-rg \
+            --profile-name ecommerce-global \
+            --name uat-endpoint \
+            --type externalEndpoints \
+            --target $UAT_IP \
+            --priority 2
+
+      - name: Create Private DNS Zone
+        run: |
+          az network private-dns zone create \
+            --resource-group ecommerce-rg \
+            --name ecommerce-demo1.com
+
+      - name: Add CNAME Records
+        run: |
+          # shop.dev.ecommerce-demo1.com → Traffic Manager
+          az network private-dns record-set cname set-record \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --record-set-name shop.dev \
+            --cname ecommerce-global.trafficmanager.net
+
+          # shop.uat.ecommerce-demo1.com → Traffic Manager
+          az network private-dns record-set cname set-record \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --record-set-name shop.uat \
+            --cname ecommerce-global.trafficmanager.net
+
+      - name: Link Private DNS Zone to VNet
+        run: |
+          az network private-dns link vnet create \
+            --resource-group ecommerce-rg \
+            --zone-name ecommerce-demo1.com \
+            --name ecommerce-vnet-link \
+            --virtual-network /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/MC_rg-aks-dev_aks-dev-cluster_northeurope/providers/Microsoft.Network/virtualNetworks/aks-vnet-29158593 \
+            --registration-enabled false
+

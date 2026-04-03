@@ -41,7 +41,7 @@ variable "node_count" {
 variable "vm_size" {
   description = "VM size for the nodes"
   type        = string
-  default     = "Standard_B1s"
+  default     = "Standard_B4s_v2"
 }
 
 variable "os_disk_size_gb" {
@@ -97,13 +97,13 @@ variable "load_balancer_sku" {
 variable "enable_monitoring" {
   description = "Enable Container Insights monitoring"
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "log_analytics_workspace_id" {
   description = "Log Analytics Workspace ID for monitoring"
   type        = string
-  default     = null
+  default     = 1
 }
 
 variable "tags" {
