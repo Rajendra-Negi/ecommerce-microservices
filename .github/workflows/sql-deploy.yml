@@ -59,7 +59,7 @@ jobs:
               -var="environment=${{ github.event.inputs.environment }}" \
               -var="model=${{ github.event.inputs.model }}" \
               -var-file="environments/${{ github.event.inputs.environment }}.tfvars"
-          terraform -chdir=terraformDB show -json tfplan.binary > tfplan.json
+          terraform -chdir=terraformDB show -json tfplan.binary > terraformDB/tfplan.json
         env:
           ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
 
