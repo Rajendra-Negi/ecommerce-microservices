@@ -2,7 +2,7 @@ package terraform
 
 default allow = false
 
-allow {
+allow if {
   every rc in input.resource_changes {
     rc.change.after.location == "eastus"
   }
