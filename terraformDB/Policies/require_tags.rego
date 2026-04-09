@@ -3,7 +3,8 @@ package terraform
 default allow = false
 
 allow {
-  all tfplan.resource_changes as rc {
+  # iterate over all resource changes
+  every rc in input.resource_changes {
     rc.change.after.tags["environment"]
   }
 }

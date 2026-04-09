@@ -3,7 +3,7 @@ package terraform
 default allow = false
 
 allow {
-  all tfplan.resource_changes as rc {
+  every rc in input.resource_changes {
     rc.change.after.location == "eastus"
   }
 }
