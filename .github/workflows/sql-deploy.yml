@@ -59,8 +59,19 @@ jobs:
               -var="environment=${{ github.event.inputs.environment }}" \
               -var="model=${{ github.event.inputs.model }}" \
               -var-file="environments/${{ github.event.inputs.environment }}.tfvars"
+          terraform -chdir=terraformDB show -json tfplan.binary > tfplan.json
         env:
           ARM_ACCESS_KEY: ${{ secrets.ARM_ACCESS_KEY }}
+
+      - name: Install OPA
+        run: |
+          curl -L -o opa https://openpolicyagent.github.io/downloads/latest/opa_linux_amd64
+          chmod +x opa
+          sudo mv opa /usr/local/bin/
+
+      - name: OPA Policy Check
+        run: |
+          opa eval --data policies --input terraformDB/tfplan.json "data.terraform.allow"
 
       - name: Terraform Apply
         if: ${{ github.event.inputs.auto_apply == 'true' }}
