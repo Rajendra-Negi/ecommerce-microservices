@@ -72,6 +72,10 @@ jobs:
 
       - name: OPA Policy Check
         run: |
+          opa eval --data Policies --input terraformDB/tfplan.json "data.terraform.allow"
+
+      - name: OPA Policy Check
+        run: |
           opa eval --data policies --input terraformDB/tfplan.json "data.terraform.allow"
 
       - name: Terraform Apply
