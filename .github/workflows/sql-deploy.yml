@@ -78,10 +78,6 @@ jobs:
         run: |
           opa eval --data terraformDB/Policies --input terraformDB/tfplan.json "data.terraform.allow"
 
-      - name: OPA Policy Check
-        run: |
-          opa eval --data Policies --input terraformDB/tfplan.json "data.terraform.allow"
-
       - name: Terraform Apply
         if: ${{ github.event.inputs.auto_apply == 'true' }}
         shell: bash
