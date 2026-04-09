@@ -1,8 +1,8 @@
 package terraform
 
-default allow = false
+default require_tags = false
 
-allow if {
+require_tags if {
   every rc in input.resource_changes {
     rc.change.after.tags["environment"]
   }

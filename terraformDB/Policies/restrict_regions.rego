@@ -1,8 +1,8 @@
 package terraform
 
-default allow = false
+default restrict_regions = false
 
-allow if {
+restrict_regions if {
   every rc in input.resource_changes {
     rc.change.after.location == "eastus"
   }
