@@ -70,9 +70,13 @@ jobs:
           sudo mv opa /usr/local/bin/opa
           opa version
 
+      - name: List Repo Contents
+        run: |
+          ls -R
+
       - name: OPA Policy Check
         run: |
-          opa eval --data Policies --input terraformDB/tfplan.json "data.terraform.allow"
+          opa eval --data terraformDB/Policies --input terraformDB/tfplan.json "data.terraform.allow"
 
       - name: OPA Policy Check
         run: |
