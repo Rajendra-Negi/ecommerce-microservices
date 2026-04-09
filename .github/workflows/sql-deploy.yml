@@ -55,7 +55,7 @@ jobs:
       - name: Terraform Plan
         shell: bash
         run: |
-          terraform -chdir=terraformDB plan \
+          terraform -chdir=terraformDB plan -out=tfplan.binary \
               -var="environment=${{ github.event.inputs.environment }}" \
               -var="model=${{ github.event.inputs.model }}" \
               -var-file="environments/${{ github.event.inputs.environment }}.tfvars"
